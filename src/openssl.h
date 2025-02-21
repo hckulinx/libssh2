@@ -156,8 +156,10 @@
     (defined(LIBRESSL_VERSION_NUMBER) && \
     LIBRESSL_VERSION_NUMBER >= 0x3070000fL)
 # define LIBSSH2_ED25519 1
+# define LIBSSH2_SM2_SM3 1
 #else
 # define LIBSSH2_ED25519 0
+# define LIBSSH2_SM2_SM3 0
 #endif
 
 
@@ -387,6 +389,19 @@ libssh2_curve_type;
 #define libssh2_ed25519_ctx EVP_PKEY
 #define _libssh2_ed25519_free(ctx) EVP_PKEY_free(ctx)
 #endif /* LIBSSH2_ED25519 */
+
+#if LIBSSH2_SM2_SM3
+#define libssh2_sm2_ctx EVP_PKEY
+#define _libssh2_sm2_free(ctx) EVP_PKEY_free(ctx)
+#define libssh2_sm3_ctx EVP_MD_CTX *
+int _libssh2_sm3_init(libssh2_sm3_ctx *ctx);
+#define libssh2_sm3_init(x) _libssh2_sm3_init(x)
+#define libssh2_sm3_update(ctx, data, len) EVP_DigestUpdate(ctx, data, len)
+#define libssh2_sm3_final(ctx, out) do {                                     \
+                                         EVP_DigestFinal_ex(ctx, out, NULL); \
+                                         EVP_MD_CTX_free(ctx);               \
+                                     } while(0)
+#endif /* LIBSSH2_SM2_SM3 */
 
 #define _libssh2_cipher_type(name) const EVP_CIPHER *(*name)(void)
 #ifdef HAVE_OPAQUE_STRUCTS

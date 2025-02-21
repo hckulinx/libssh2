@@ -347,6 +347,7 @@ typedef struct kmdhgGPshakex_state_t
     void *exchange_hash;
     packet_require_state_t req_state;
     libssh2_nonblocking_states burn_state;
+    unsigned char K[LIBSSH2_SM2_K_LEN]; /*GM SM2 kex value*/
 } kmdhgGPshakex_state_t;
 
 typedef struct key_exchange_state_low_t
@@ -736,6 +737,11 @@ struct _LIBSSH2_SESSION
     unsigned char server_hostkey_sha256[SHA256_DIGEST_LENGTH];
     int server_hostkey_sha256_valid;
 
+#if LIBSSH2_SM2_SM3
+    unsigned char server_hostkey_sm3[LIBSSH2_SM3_DIGEST_LENGTH];
+    int server_hostkey_sm3_valid;
+#endif /* ! LIBSSH2_SM2_SM3 */
+
     /* public key algorithms accepted as comma separated list */
     char *server_sign_algorithms;
 
@@ -955,6 +961,11 @@ struct _LIBSSH2_SESSION
 
     /* Configurable timeout for packets. Replaces LIBSSH2_READ_TIMEOUT */
     long packet_read_timeout;
+#if LIBSSH2_SM2_SM3
+    unsigned char randomc[LIBSSH2_RANDOM_LEN];   /*client kex value*/
+    unsigned char randoms[LIBSSH2_RANDOM_LEN];   /*server kex value*/
+    unsigned char sm4_key[LIBSSH2_SM4_KEY_LEN];  /*temp sm4_key encrypt kex value*/
+#endif /* ! LIBSSH2_SM2_SM3 */
 };
 
 /* session.state bits */
@@ -1138,6 +1149,9 @@ _libssh2_debug_low(LIBSSH2_SESSION * session, int context, const char *format,
 
 #define SSH_MSG_KEXINIT                             20
 #define SSH_MSG_NEWKEYS                             21
+#define SSH_MSG_KEX_REQUEST                         22
+#define SSH_MSG_KEX_REPLY                           23
+#define SSH_MSG_KEX                                 24
 
 /* diffie-hellman-group1-sha1 */
 #define SSH_MSG_KEXDH_INIT                          30
@@ -1160,6 +1174,8 @@ _libssh2_debug_low(LIBSSH2_SESSION * session, int context, const char *format,
 #define SSH_MSG_USERAUTH_FAILURE                    51
 #define SSH_MSG_USERAUTH_SUCCESS                    52
 #define SSH_MSG_USERAUTH_BANNER                     53
+#define SSH_MSG_USERAUTH_CHALLENGE                  54
+#define SSH_MSG_USERAUTH_RESPOND                    55
 
 /* "public key" method */
 #define SSH_MSG_USERAUTH_PK_OK                      60
