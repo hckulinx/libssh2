@@ -1604,6 +1604,11 @@ static int hostkey_type(const unsigned char *hostkey, size_t len)
         0, 0, 0, 0x07, 's', 's', 'h', '-', 'd', 's', 's'
     };
 #endif
+#if LIBSSH2_SM2_SM3
+    static const unsigned char sm2[] = {
+        0, 0, 0, 0x07, 's', 's', 'h', '-', 's', 'm', '2'
+    };
+#endif
     static const unsigned char ecdsa_256[] = {
         0, 0, 0, 0x13, 'e', 'c', 'd', 's', 'a', '-', 's', 'h', 'a', '2', '-',
         'n', 'i', 's', 't', 'p', '2', '5', '6'
@@ -1629,6 +1634,11 @@ static int hostkey_type(const unsigned char *hostkey, size_t len)
 #if LIBSSH2_DSA
     if(!memcmp(dss, hostkey, 11))
         return LIBSSH2_HOSTKEY_TYPE_DSS;
+#endif
+
+#if LIBSSH2_SM2_SM3
+    if(!memcmp(sm2, hostkey, 11))
+        return LIBSSH2_HOSTKEY_TYPE_SM2;
 #endif
 
     if(len < 15)

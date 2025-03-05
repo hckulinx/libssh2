@@ -511,6 +511,7 @@ typedef struct _LIBSSH2_POLLFD {
 #define LIBSSH2_HOSTKEY_TYPE_ECDSA_384          4
 #define LIBSSH2_HOSTKEY_TYPE_ECDSA_521          5
 #define LIBSSH2_HOSTKEY_TYPE_ED25519            6
+#define LIBSSH2_HOSTKEY_TYPE_SM2                7
 
 /* Disconnect Codes (defined by SSH protocol) */
 #define SSH_DISCONNECT_HOST_NOT_ALLOWED_TO_CONNECT          1

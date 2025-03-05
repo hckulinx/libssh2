@@ -158,10 +158,14 @@
 # define LIBSSH2_ED25519 1
 # define LIBSSH2_SM2_SM3 1
 # define LIBSSH2_SM4_CBC 1
+# define LIBSSH2_HMAC_SM3 1
+# define LIBSSH2_HMAC_SM4 1
 #else
 # define LIBSSH2_ED25519 0
 # define LIBSSH2_SM2_SM3 0
 # define LIBSSH2_SM4_CBC 0
+# define LIBSSH2_HMAC_SM3 0
+# define LIBSSH2_HMAC_SM4 0
 #endif
 
 

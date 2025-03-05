@@ -452,7 +452,139 @@ static const LIBSSH2_MAC_METHOD mac_method_hmac_ripemd160_openssh_com = {
 };
 #endif /* LIBSSH2_HMAC_RIPEMD */
 
+#if LIBSSH2_HMAC_SM3
+static int
+mac_method_hmac_sm3_hash(LIBSSH2_SESSION * session,
+                         unsigned char *buf, uint32_t seqno,
+                         const unsigned char *packet,
+                         size_t packet_len,
+                         const unsigned char *addtl,
+                         size_t addtl_len,
+                         void **abstract)
+{
+    libssh2_hmac_ctx ctx;
+    unsigned char seqno_buf[4];
+    (void)session;
+
+    _libssh2_htonu32(seqno_buf, seqno);
+
+    libssh2_hmac_ctx_init(ctx);
+    _libssh2_hmac_sm3_init(&ctx, *abstract, 32);
+    libssh2_hmac_update(ctx, seqno_buf, 4);
+    libssh2_hmac_update(ctx, packet, packet_len);
+    if(addtl && addtl_len) {
+        libssh2_hmac_update(ctx, addtl, addtl_len);
+    }
+    libssh2_hmac_final(ctx, buf);
+    libssh2_hmac_cleanup(&ctx);
+
+    return 0;
+}
+
+static const LIBSSH2_MAC_METHOD mac_method_hmac_sm3 = {
+    "hmac-sm3",
+    32,
+    32,
+    mac_method_common_init,
+    mac_method_hmac_sm3_hash,
+    mac_method_common_dtor,
+    0
+};
+#endif /* LIBSSH2_HMAC_SM3 */
+
+#if LIBSSH2_HMAC_SM4
+static int
+mac_method_hmac_sm4_hash(LIBSSH2_SESSION * session,
+                         unsigned char *buf, uint32_t seqno,
+                         const unsigned char *packet,
+                         size_t packet_len,
+                         const unsigned char *addtl,
+                         size_t addtl_len, void **abstract)
+{
+    size_t dlen, rem, total_len, cipherlen = 0;
+    int ret = 0;
+    unsigned char seqno_buf[4];
+    unsigned char *cipher = NULL;
+    unsigned char *data = NULL;
+    unsigned char iv[16] = {0};
+    _libssh2_cipher_ctx ctx = NULL;
+
+    (void)session;
+    _libssh2_htonu32(seqno_buf, seqno);
+
+    dlen = 4 + packet_len + (addtl ? addtl_len : 0);
+    rem = 16 - (dlen % 16);
+    total_len = dlen + rem;
+
+    data = malloc(total_len);
+    if (!data) {
+        return 1;
+    }
+
+    memcpy(data, seqno_buf, 4);
+    memcpy(data + 4, packet, packet_len);
+    if (addtl && addtl_len) {
+        memcpy(data + 4 + packet_len, addtl, addtl_len);
+    }
+    memset(data + dlen, 0, rem);
+
+    cipher = malloc(total_len + 16);
+    if (!cipher) {
+        free(data);
+        return 1;
+    }
+
+    ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) {
+        free(data);
+        free(cipher);
+        return 1;
+    }
+
+    if (EVP_EncryptInit_ex(ctx, EVP_sm4_cbc(), NULL, *abstract, iv) != 1) {
+        ret = 1;
+        goto cleanup;
+    }
+
+    int len;
+    if (EVP_EncryptUpdate(ctx, cipher, &len, data, total_len) != 1) {
+        ret = 1;
+        goto cleanup;
+    }
+    cipherlen = len;
+
+    if (EVP_EncryptFinal_ex(ctx, cipher + cipherlen, &len) != 1) {
+        ret = 1;
+        goto cleanup;
+    }
+    cipherlen += len;
+    memcpy(buf, cipher + cipherlen - 32, 16);
+
+cleanup:
+    free(data);
+    free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+static const LIBSSH2_MAC_METHOD mac_method_hmac_sm4 = {
+    "hmac-sm4",
+    16,
+    16,
+    mac_method_common_init,
+    mac_method_hmac_sm4_hash,
+    mac_method_common_dtor,
+    0
+};
+#endif /* LIBSSH2_HMAC_SM4 */
+
 static const LIBSSH2_MAC_METHOD *mac_methods[] = {
+#if LIBSSH2_HMAC_SM3
+    &mac_method_hmac_sm3,
+#endif
+#if LIBSSH2_HMAC_SM4
+    &mac_method_hmac_sm4,
+#endif
 #if LIBSSH2_HMAC_SHA256
     &mac_method_hmac_sha2_256,
     &mac_method_hmac_sha2_256_etm,

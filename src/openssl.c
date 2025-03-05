@@ -117,6 +117,20 @@ int _libssh2_hmac_ripemd160_init(libssh2_hmac_ctx *ctx,
 }
 #endif
 
+#if LIBSSH2_HMAC_SM3
+int _libssh2_hmac_sm3_init(libssh2_hmac_ctx *ctx,
+                                 void *key, size_t keylen)
+{
+#ifdef USE_OPENSSL_3
+    return _libssh2_hmac_init(ctx, key, keylen, OSSL_DIGEST_NAME_SM3);
+#elif defined(HAVE_OPAQUE_STRUCTS)
+    return HMAC_Init_ex(*ctx, key, (int)keylen, EVP_sm3(), NULL);
+#else
+    return HMAC_Init_ex(ctx, key, (int)keylen, EVP_sm3(), NULL);
+#endif
+}
+#endif
+
 int _libssh2_hmac_sha1_init(libssh2_hmac_ctx *ctx,
                             void *key, size_t keylen)
 {
