@@ -157,9 +157,11 @@
     LIBRESSL_VERSION_NUMBER >= 0x3070000fL)
 # define LIBSSH2_ED25519 1
 # define LIBSSH2_SM2_SM3 1
+# define LIBSSH2_SM4_CBC 1
 #else
 # define LIBSSH2_ED25519 0
 # define LIBSSH2_SM2_SM3 0
+# define LIBSSH2_SM4_CBC 0
 #endif
 
 
@@ -424,6 +426,7 @@ int _libssh2_sm3_init(libssh2_sm3_ctx *ctx);
 #define _libssh2_cipher_cast5 EVP_cast5_cbc
 #define _libssh2_cipher_3des EVP_des_ede3_cbc
 #define _libssh2_cipher_chacha20 NULL
+#define _libssh2_cipher_sm4 EVP_sm4_cbc
 
 #ifdef HAVE_OPAQUE_STRUCTS
 #define _libssh2_cipher_dtor(ctx) EVP_CIPHER_CTX_free(*(ctx))
